@@ -13,26 +13,31 @@ declare module "express-serve-static-core" {
 
 
 export const authenticate = catchErrors(async (req, res, next) => {
-    const token = req.cookies.jwt;
+  console.log("🔐 Checking cookies:", req.cookies);
 
-    if(!token){
-        throw new Error("Unauthorized, no token");
-    }
+  const token = req.cookies.jwt;
 
-    const decoded = jwt.verify(token, JWT_PASSWORD) as jwt.JwtPayload;
+  if (!token) {
+    console.log("❌ No token in cookie");
+    throw new Error("Unauthorized, no token");
+  }
 
-    if (!decoded || typeof decoded !== "object" || !decoded.userId) {
-      throw new Error("Invalid token payload");
-    }
-    
-    const user = await Auth.findById(decoded.userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
+  const decoded = jwt.verify(token, JWT_PASSWORD) as jwt.JwtPayload;
+  console.log("✅ Decoded:", decoded);
 
-    req.user = user;
+  if (!decoded || typeof decoded !== "object" || !decoded.userId) {
+    console.log("❌ Invalid token payload");
+    throw new Error("Invalid token payload");
+  }
 
-   
-    
-    next();
-})
+  const user = await Auth.findById(decoded.userId);
+  if (!user) {
+    console.log("❌ User not found");
+    throw new Error("User not found");
+  }
+
+  req.user = user;
+  console.log("✅ User authenticated:", req.user._id);
+
+  next();
+});

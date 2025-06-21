@@ -57,7 +57,7 @@ export const login = catchErrors(async (req, res) => {
         throw new Error("Invalid credentials");
     }
 
-    const token = jwt.sign({ id: user._id}, JWT_PASSWORD, {
+    const token = jwt.sign({ userId: user._id}, JWT_PASSWORD, {
         expiresIn: "7d"
     });
 

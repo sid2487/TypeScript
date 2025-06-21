@@ -6,6 +6,7 @@ import errorHandler from "./middlewares/errorHandler";
 import authRoutes from "./routes/auth.route";
 import todoRoutes from "./routes/todo.route";
 import cookieParser from "cookie-parser"
+import { authenticate } from "./middlewares/authenticate";
 
 const app = express();
 
@@ -19,6 +20,7 @@ console.log("✅ /api/todo routes mounted");
 
 app.get("/test", (req, res) => {
   res.send("Express is working");
+  console.log("testing....")
 });
 
 
