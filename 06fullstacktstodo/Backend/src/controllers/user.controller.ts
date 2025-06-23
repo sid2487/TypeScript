@@ -52,7 +52,8 @@ export const login = catchErrors(async (req, res) => {
     const cookieOptions = {
       expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
       httpOnly: true,
-      sameSite: "lax" as const,
+      sameSite: 'lax' as const,
+      secure: false
     };
 
     res.cookie("jwt", token, cookieOptions);
@@ -63,3 +64,15 @@ export const logout = catchErrors(async (req, res) => {
     res.clearCookie("jwt");
     res.status(201).json({ success: true, message: "Loggedout Successfully" });
 ;})
+
+export const me = catchErrors(async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: "Unauthorized" });
+  }
+
+  res.status(200).json({
+    success: true,
+    user: req.user,
+  });
+});
+  
