@@ -4,13 +4,30 @@ import { useEffect, useRef, useState } from "react";
 function App() {
   const [input, setInput] = useState("");
   const socketRef = useRef<WebSocket>(null);
-  const [messages, setMessages] = useState<string[]>([]);
 
+  type Message = {
+    type: string;
+    payload: {
+      message: string;
+      username?: string;
+      time?: string;
+    };
+  };
+  const [messages, setMessages] = useState<Message[]>([]);
+  
+  const [username, setUsername] = useState("");
   const [roomId, setRoomId] = useState<string>("");
   const [joined, setJoined] = useState<boolean>(false);
 
   const roomInputRef = useRef<HTMLInputElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages])
+  
 
   useEffect(() => {
     roomInputRef.current?.focus();
@@ -25,7 +42,7 @@ function App() {
 
 
   const handleJoinRoom = () => {
-    if(!roomId.trim()){
+    if(!roomId.trim() || !username.trim()){
       alert("Please enter a valid Room Id");
       return;
     }
@@ -39,14 +56,18 @@ function App() {
       ws.send(
         JSON.stringify({
           type: "join",
-          payload: { roomId }
+          payload: { roomId, username }
         })
       );
       setJoined(true);
     };
 
     ws.onmessage = (event) => {
-      setMessages((prev) => [...prev, event.data]);
+      const data = JSON.parse(event.data);
+      
+      if(data.type === "message" || data.type === "system"){
+        setMessages((prev) => [...prev, data]);
+      }
     };
     
 
@@ -62,7 +83,7 @@ function App() {
       socketRef.current.send(JSON.stringify({
         type: "message",
         payload: {
-          message: input
+          message: input,
         }
       }));
       setInput("")
@@ -71,20 +92,28 @@ function App() {
  
 
   return (
-    <div className="bg-black h-screen flex items-center justify-center text-white">
+    <div className="bg-black h-screen flex items-center justify-center flex-col gap-4 text-white">
+      <h1 className="font-bold text-2xl">Chat Room</h1>
       <div className="bg-gray-400 w-fit h-fit rounded-xl">
         {!joined && (
-          <div className="flex p-2 m-2 justify-center gap-4 items-center">
+          <div className="flex flex-col gap-4 p-4 m-4">
             <input
               ref={roomInputRef}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your name"
+              className="border rounded-lg p-2 text-black text-center"
+              type="text"
+            />
+            <input
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+              placeholder="Enter Room ID"
+              className="border rounded-lg p-2 text-black text-center"
+              type="text"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleJoinRoom();
               }}
-              value={roomId}
-              onChange={(e) => setRoomId(e.target.value)}
-              placeholder="Enter roomId"
-              className="border w-fit rounded-lg outline-none p-2 text-center"
-              type="text"
             />
             <button
               onClick={handleJoinRoom}
@@ -97,24 +126,51 @@ function App() {
 
         {joined && (
           <>
-            <div className="h-[400px] w-[600px] m-4 p-2 overflow-y-auto space-y-2">
+            <div className="h-[400px] w-[600px] m-4 p-2 overflow-y-auto space-y-2 bg-black rounded-lg">
               {messages.map((msg, index) => (
-                <div key={index} className="bg-green-800 rounded-lg p-2 w-fit">
-                  {msg}
+                <div
+                  key={index}
+                  className={`rounded-lg p-2 w-fit ${
+                    msg.type === "system"
+                      ? "bg-gray-600 italic"
+                      : "bg-green-800"
+                  }`}
+                >
+                  {msg.type === "system" ? (
+                    <span className="flex items-center gap-2">
+                      {msg.payload.message}
+                      <span className="text-xs text-gray-300">
+                        ({msg.payload.time})
+                      </span>
+                    </span>
+                  ) : (
+                    <>
+                      <span className="flex items-center gap-2">
+                        {msg.payload.username}:
+                        <span className="font-bold">{msg.payload.message}</span>
+                      </span>
+                      {/* <span></span> */}
+                      <span className="ml-2 text-xs text-gray-300">
+                        ({msg.payload.time})
+                      </span>
+                    </>
+                  )}
                 </div>
               ))}
+              <div ref={scrollRef} className="h-0"></div>
             </div>
 
             <div className="flex justify-between gap-2 m-2 p-2">
               <input
                 ref={messageInputRef}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSend();
-                }}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 className="border w-full rounded-xl outline-none p-2 text-black"
                 type="text"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSend();
+                }}
+                placeholder="Type your message..."
               />
               <button
                 onClick={handleSend}
