@@ -6,6 +6,10 @@ function App() {
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState("");
   const socketRef = useRef<WebSocket | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+
+  
 
 
   useEffect(() => {
@@ -13,12 +17,18 @@ function App() {
     socketRef.current = ws;
 
     ws.onmessage = (event) => {
-      setMessages(m => [...m, event.data]);
+      setMessages((m) => [...m, event.data]);
     };
+
+    // if (inputRef.current) {
+    //   inputRef.current.focus();
+    // }
+
+    inputRef.current?.focus();
 
     ws.onopen = () => {
       console.log("Connected to websocket server");
-    }
+    };
 
     ws.onclose = () => {
       console.log("Disconnected from websocket server");
@@ -26,8 +36,7 @@ function App() {
 
     return () => {
       ws.close();
-    }
-
+    };
   }, []);
 
   const handleClick = () => {
@@ -53,6 +62,7 @@ function App() {
 
         <div className="flex justify-between gap-2 m-2 p-2">
           <input
+          ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
             className="border w-full rounded-xl outline-none p-2 text-black"

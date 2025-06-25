@@ -2,11 +2,11 @@ import { useEffect, useState } from "react"
 
 function App() {
 
-  interface Todo {
-    id: number;
-    text: string;
-    completed: boolean
-  }
+  // interface Todo {
+  //   id: number;
+  //   text: string;
+  //   completed: boolean
+  // }
 
   const [todos, setTodos] = useState<Todo[]>(() => {
     const storeTodos = localStorage.getItem("todoItems");
